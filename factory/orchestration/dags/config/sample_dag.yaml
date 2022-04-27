@@ -1,0 +1,31 @@
+dags:
+  z-sample-dag:
+
+    concurrency: 5
+    schedule_interval: "* 13 * * *"
+    max_active_runs: 2
+
+
+
+
+    tasks:
+      task_1:
+        op_type: "cluster_start"
+        upstream:
+        params:
+          param1: "a"
+          cluster_name: "__c_name__"
+          project_id: "__c_project__"
+          master_machine_type: "__c_machine_type__"
+
+      task_2:
+          op_type: "spark_submit"
+          upstream: task_1
+          params:
+            param1: "c"
+
+      task_3:
+          op_type: "cluster_stop"
+          upstream: task_1,task_2
+          params:
+            param1: "d"

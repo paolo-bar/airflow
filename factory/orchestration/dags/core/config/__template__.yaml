@@ -1,0 +1,60 @@
+dags:
+    vfait_template_dag:
+      description: "DAG"
+      schedule_interval: null
+      max_active_runs:
+      concurrency: 1
+      parallelism: 1
+
+      envs_:
+         live:
+           schedule_interval: "0 14 * * *"
+         nonlive:
+           parallelism: 5
+
+      # ------------------------------------------------
+      tasks:
+        task1:
+          op_type: "dummy"
+          upstream:
+
+          params:
+            cluster_name: "template-dag"
+            num_workers: 10
+            num_preemptible_workers: 10
+            labels: { "gcp-label": "gcp_label" }
+            metadata: { "block-project-ssh-keys": "true" }
+
+            envs_:
+              nonlive:
+                cluster_name: "template-dag-dev"
+              live:
+                num_workers: 30
+
+        # ------------------------------------------------
+        task2:
+            op_type: "dummy"
+            upstream: task1
+
+            params:
+              mainPython: gs://{{ gcs_bucket }}/path/to/main/python.py
+              module: &py_module "path.to.module"
+              delay: 1
+
+              envs_:
+                nonlive:
+                  arguments: [*py_module,-env, nonlive]
+                live:
+                  arguments: [*py_module,-env, live]
+
+        # ------------------------------------------------
+        task3:
+            op_type: "dummy"
+            upstream: task1,task2
+
+            params:
+              param1: "d"
+
+              envs_:
+                nonlive:
+                  num_workers: 2

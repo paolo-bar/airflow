@@ -1,0 +1,75 @@
+dags:
+  z-sample-dag1:
+    description: "Sample DAG"
+    concurrency: 1
+    schedule_interval: "0 13 * * *"
+    max_active_runs: 5
+    envs_:
+      live:
+        schedule_interval: "0 14 * * *"
+
+    tasks:
+      cluster_start:
+        op_type: "cluster_start"
+        upstream:
+        trigger_rule: "all_success"
+        params:
+          param1: "a"  ### test
+          project_id: "__c_project__" ### test
+          master_machine_type: "__c_machine_type__"  ### test
+          cluster_name: "sample_cluster"
+          num_workers: 10
+          num_preemptible_workers: 10
+          labels: { "vf-it_vfa": "it_vfa_presence" }
+          metadata: { "block-project-ssh-keys": "true" }
+
+          envs_:
+            nonlive:
+                num_workers: 3
+
+
+      spark_submit:
+          op_type: "spark_submit"
+          upstream: cluster_start
+
+          params:
+            mainPython: "path/to/main/module.py"
+            module: &py_module "path.to.module"
+            delay: 1
+
+            envs_:
+              nonlive:
+                arguments: [*py_module, arg0, arg1]
+              live:
+                arguments: [*py_module, arg0, arg1]
+
+      spark_submit_multi:
+          op_type: "spark_submit-multi"
+          upstream: spark_submit
+
+          params:
+            mainPython: "path/to/main/module.py"
+            parallelism: 3
+            module: &py_module1 "path.to.module"
+            bucket_data_src: "<src_bucket>"
+            delay: 1
+
+            envs_:
+              nonlive:
+                arguments: [*py_module1, arg0, arg1]
+              live:
+                arguments: [*py_module1, arg0, arg1]
+
+      cluster_stop:
+          op_type: "cluster_stop"
+          upstream: spark_submit_multi
+
+          params:
+            param1: "d"
+
+      push_ts:
+          op_type: "xcom_push_ts"
+          upstream: cluster_stop,spark_submit
+
+          params:
+            param1: "d"

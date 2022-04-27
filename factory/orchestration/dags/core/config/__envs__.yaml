@@ -1,0 +1,18 @@
+_envs_:
+
+  project_id: "{{ gcp_project }}"
+  zone: "{{ gce_zone }}"
+  region: "{{ gcp_region }}"
+  bucket: "{{ gcs_bucket }}"
+
+  projects:
+    gcp-nonlive: nonlive
+    gcp-live: live
+
+  envs_:
+    nonlive:
+      bucket_data: "gcp-nonlive-bkt"
+      bucket_data_src: "gcp-nonlive-bkt"
+      bucket_data_tgt: "gcp-nonlive-bkt"
+    live:
+      bucket_data: "gcp-live-bkt"

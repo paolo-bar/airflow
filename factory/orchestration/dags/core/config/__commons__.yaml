@@ -1,0 +1,43 @@
+_commons_:
+
+  dag:
+    description: "DAG"
+    schedule_interval: null
+    catchup: False
+    max_active_runs: 1
+    concurrency: 1
+    retries: 0
+    retries_delay_minutes: 2
+
+  # tasks
+  # --------------------------------------------
+  trigger_rule: "all_success"
+  parallelism: 1
+
+  base_cluster:
+    cluster_name: "airflow-template-cluster"
+    service_account: "{{ service_account }}"
+    master_machine_type: "n1-highmem-8"
+    master_disk_size: 150
+    worker_machine_type: "n1-highmem-8"
+    num_workers: 20
+    num_preemptible_workers: 0
+    worker_disk_size: 150
+    image_version: "<python-image>"
+    subnetwork_uri: "{{ subnetwork_uri }}"
+    internal_ip_only: true
+    enable_optional_components: true
+    xcom_push: true
+    properties:
+      {
+        "core:fs.gs.implicit.dir.repair.enable": "false",
+        "core:fs.gs.status.parallel.enable": "true",
+        "spark:spark.driver.extraJavaOptions": "-Duser.timezone=CET",
+        "spark:spark.executor.extraJavaOptions": "-Duser.timezone=CET",
+      }
+    labels: {"_label_dummy_": ""}
+    metadata: { "block-project-ssh-keys": "true" }
+    tags: "{{ firewall_rules_tags }}"
+    init_actions:
+      - gs://{{ gcs_bucket }}/path/to/init_actions.sh
+    jars: gs://{{ gcs_bucket }}/path/to/jars/*.jar
